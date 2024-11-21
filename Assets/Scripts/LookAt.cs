@@ -22,6 +22,7 @@ public class LookAt : MonoBehaviour
     Vector3 negativeEdgeDirection;
             
     public float moveSpeed;
+    public float rotationSpeed;   
 
     public float viewAngle = 60f;
     public float aggroRange;
@@ -29,8 +30,10 @@ public class LookAt : MonoBehaviour
     bool enemyAggrod;
     bool shouldChasePlayer;
     bool goToLastPosition;
+    
     bool visionCheckOnCooldown;
     bool visionCheckRunning;
+    bool checkingVision;
 
     float dotProduct;
 
@@ -75,24 +78,22 @@ public class LookAt : MonoBehaviour
         }
     }
     // Start is called before the first frame update
-    
-        
+            
     // Update is called once per frame
     void Update()
     {
         EnemyAggro(); //RETURNING A FLAG TO CALL THE CHASE METHOD IN FIXED UPDATE
+
+        
     }
 
     private void FixedUpdate()
     {
-        Debug.Log(shouldChasePlayer);
+        //Debug.Log(shouldChasePlayer);
         if (enemyAggrod)
         {
-            StartCoroutine(DirectVisionCheck());
-                       
-        }
-        
-
+            StartCoroutine(DirectVisionCheck());            
+        } 
         if(shouldChasePlayer || goToLastPosition)
         {
             ChasePlayer();
@@ -125,18 +126,28 @@ public class LookAt : MonoBehaviour
     }
 
     void ChasePlayer()
-    {        
+    {
+        var step = rotationSpeed * Time.deltaTime;
         
-        if(shouldChasePlayer)
+        if (shouldChasePlayer)
         {
+            
+
+            //GETTING OUR TARGET ROATION USING THE PREVIOUSLY CALCULATED 'directionToPlayer' TO USE INSIDE THE 'Quaternion.RotateTowards' METHOD. 
+            Quaternion targetRotation = Quaternion.LookRotation(directionToPlayer);
+            
             //MOVE TOWARDS PLAYER
             transform.position = Vector3.MoveTowards(transform.position, player.position, moveSpeed);
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, step);
+
         }
         else if(goToLastPosition)
         {
-            //MOVE TOWARDS PLAYERS LAST POSITION
-            transform.position = Vector3.MoveTowards(transform.position, lastRecordedPlayerPosition, moveSpeed);            
             
+            //MOVE TOWARDS PLAYERS LAST POSITION
+            transform.position = Vector3.MoveTowards(transform.position, lastRecordedPlayerPosition, moveSpeed);
+            transform.LookAt(transform.position, lastRecordedPlayerPosition);
+
             if (transform.position == lastRecordedPlayerPosition)
             {                
                 //STOPPING THE MOVEMENT ONCE THE ENEMY GETS TO THE PLAYERS LAST RECORD POSITION. LATER HE WILL LOOK AROUND FOR THEM.
@@ -144,8 +155,11 @@ public class LookAt : MonoBehaviour
                 shouldChasePlayer = false;
             }
         }
-
-                                 
+        //ENEMY WILL CONTINUE TO RAYCAST AS LONG AS THE PLAYER IS DETECTED. OTHERWISE ENEMY JUST CONTINUES TO MOVE TO HIS LAST POSITION ('checkingVision' IS TOGGLED IN THE RAYCAST COROUTINE)       
+        if(checkingVision)
+        {
+            StartCoroutine(DirectVisionCheck());
+        }                                                         
     }
 
     IEnumerator DirectVisionCheck()
@@ -156,6 +170,9 @@ public class LookAt : MonoBehaviour
         //SET THE COROUTINE FLAG TO RUNNING
         visionCheckRunning = true;
         
+        //SETTING A TOGGLE SO THAT THE ENEMY WILL CONTINUE TO RAYCAST ANYTIME IT IS MOVING AS WELL AS ANYTIME IT IS AGGROD BY SEEING THE PLAYER
+        checkingVision = true;
+
         //COOLDOWN FOR THE RAYCAST
         yield return new WaitForSeconds(.1f);
         
@@ -168,6 +185,7 @@ public class LookAt : MonoBehaviour
         {
             //CHECKING WHICH OBJECT WAS HIT
             objectHit = hit.collider.gameObject.name;
+            Debug.Log($"Object Hit By Cast: {objectHit}");
             
             //Debug.Log($"Recorded Position: {lastRecordedPlayerPosition} | {objectHit}");
         }
@@ -177,15 +195,18 @@ public class LookAt : MonoBehaviour
             //STORING PLAYERS POSITION ON RAYCASTHIT
             lastRecordedPlayerPosition = player.position;
             
-            //STARTING B-LINING PLAYER
+            //START B-LINING PLAYER
             goToLastPosition = false;
-            shouldChasePlayer = true;
+            shouldChasePlayer = true;            
         }
         else
         {
+            //STOP RAYCASTING TO THE PLAYERONCE THE HE IS HIDDEN.
+            checkingVision = false;
+            
             //START B-LINING PLAYERS LAST SEEN POSITION
             shouldChasePlayer = false;
-            goToLastPosition = true;
+            goToLastPosition = true;            
         }
         
         //Debug.Log(objectHit);

@@ -1,8 +1,31 @@
--Initial Plan for Game-
+TO-DO
 
-The Enemy needs to track the last detected position of the player and store it in case the player "dissapears" 
+Visually display the detection zone so the player more easily tell when they will be detected
+Add a player controller
+
+Add an animation that will loop when the enemy hasn't detected anyone. (He will look back and forth)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DONE ------------------------------------------------------------------------------
+
+-The Enemy needs to track the last detected position of the player and store it in case the player "dissapears" 
 behind a wall so they can avoid trying to run through walls
 
-track the players position on valid raycast hit
+-track the players position on valid raycast hit
 
-if the player isnt detected by a raycast. Move to the last tracked position instead of moving to the players position
+-if the player isnt detected by a raycast. Move to the last tracked position instead of moving to the players position
