@@ -1,0 +1,8 @@
+-Initial Plan for Game-
+
+The Enemy needs to track the last detected position of the player and store it in case the player "dissapears" 
+behind a wall so they can avoid trying to run through walls
+
+track the players position on valid raycast hit
+
+if the player isnt detected by a raycast. Move to the last tracked position instead of moving to the players position

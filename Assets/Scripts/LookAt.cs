@@ -7,7 +7,10 @@ using Unity.VisualScripting;
 
 public class LookAt : MonoBehaviour
 {
-    public Transform toLookAt;
+    public Transform player;    
+    Vector3 directionToPlayer;
+    Vector3 lastRecordedPlayerPosition;
+
     public TextMeshProUGUI dotProductText;
     public TextMeshProUGUI isInViewText;
 
@@ -17,11 +20,17 @@ public class LookAt : MonoBehaviour
    
     Vector3 edgeDirection;
     Vector3 negativeEdgeDirection;
-        
-    bool chasingPlayer;
-    public float speed;
+            
+    public float moveSpeed;
 
     public float viewAngle = 60f;
+    public float aggroRange;
+    
+    bool enemyAggrod;
+    bool shouldChasePlayer;
+    bool goToLastPosition;
+    bool visionCheckOnCooldown;
+    bool visionCheckRunning;
 
     float dotProduct;
 
@@ -30,10 +39,9 @@ public class LookAt : MonoBehaviour
     {
         //Drawing a line to the player we are looking at
         Gizmos.color = Color.blue;
-        Gizmos.DrawLine(transform.position, toLookAt.position);
-
+        Gizmos.DrawLine(transform.position, player.position);
         //Getting the direction from the enemy (looking object) to the player (object to look at)
-        Vector3 directionToObject = (toLookAt.position - transform.position).normalized;
+        Vector3 directionToObject = (player.position - transform.position).normalized;
 
         Gizmos.color = Color.red;
         Gizmos.DrawLine(transform.position, transform.forward * 2);
@@ -72,36 +80,116 @@ public class LookAt : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Vector3 directionToObject = (toLookAt.position - transform.position).normalized;
+        EnemyAggro(); //RETURNING A FLAG TO CALL THE CHASE METHOD IN FIXED UPDATE
+    }
+
+    private void FixedUpdate()
+    {
+        Debug.Log(shouldChasePlayer);
+        if (enemyAggrod)
+        {
+            StartCoroutine(DirectVisionCheck());
+                       
+        }
+        
+
+        if(shouldChasePlayer || goToLastPosition)
+        {
+            ChasePlayer();
+        }
+        
+    }
+    bool EnemyAggro()
+    {
+        directionToPlayer = (player.position - transform.position).normalized;
 
         //Determining the dot product
-        dotProduct = Vector3.Dot(transform.forward, directionToObject);
+        dotProduct = Vector3.Dot(transform.forward, directionToPlayer);
 
         dotProductText.text = $"Dot Product: {dotProduct}";
 
-        //Total Viewing Angle
-
-        //Getting the directions to the edges of the viewpoint
-        Vector3 edgeDirection = Quaternion.Euler(0, (viewAngle / 2), 0) * transform.forward;
-        Vector3 negativeEdgeDirection = Quaternion.Euler(0, (-viewAngle / 2), 0) * transform.forward;
-        
-        if (dotProduct > Mathf.Cos((viewAngle * .5f) * Mathf.Deg2Rad))
+        //IF THE PLAYER IS INSIDE THE VIEWING ANGLE AND IN RANGE
+        if (dotProduct > Mathf.Cos((viewAngle * .5f) * Mathf.Deg2Rad) && Vector3.Distance(transform.position, player.position) < aggroRange)
         {
-            isInViewText.text = $"In View";
-            chasingPlayer = true;
+            isInViewText.text = $"In View";            
             GetComponent<Renderer>().material = aggroMaterial;
+            return enemyAggrod = true;
         }
         else
         {
-            isInViewText.text = $"Out of View";
-            chasingPlayer = false;  
+            isInViewText.text = $"Out of View";            
             GetComponent<Renderer>().material = nonAggroMaterial;
+            return enemyAggrod = false;
+            
+        }        
+    }
+
+    void ChasePlayer()
+    {        
+        
+        if(shouldChasePlayer)
+        {
+            //MOVE TOWARDS PLAYER
+            transform.position = Vector3.MoveTowards(transform.position, player.position, moveSpeed);
+        }
+        else if(goToLastPosition)
+        {
+            //MOVE TOWARDS PLAYERS LAST POSITION
+            transform.position = Vector3.MoveTowards(transform.position, lastRecordedPlayerPosition, moveSpeed);            
+            
+            if (transform.position == lastRecordedPlayerPosition)
+            {                
+                //STOPPING THE MOVEMENT ONCE THE ENEMY GETS TO THE PLAYERS LAST RECORD POSITION. LATER HE WILL LOOK AROUND FOR THEM.
+                goToLastPosition = false;
+                shouldChasePlayer = false;
+            }
         }
 
-        if(chasingPlayer)
+                                 
+    }
+
+    IEnumerator DirectVisionCheck()
+    {
+        //IF THE COROUTINE ISNT ALREADY RUNNING
+        if(visionCheckRunning) yield break;
+        
+        //SET THE COROUTINE FLAG TO RUNNING
+        visionCheckRunning = true;
+        
+        //COOLDOWN FOR THE RAYCAST
+        yield return new WaitForSeconds(.1f);
+        
+        //SELECTING MASKS TO INTERACT WITH
+        LayerMask layerMask = LayerMask.GetMask("Walls", "Player");
+        string objectHit = null;
+
+        //SENDING OUT A RAY TOWARDS THE PLAYER, RETURNING THE LAYERMASK THAT IT DETECTS, EITHER 'PLAYER' OR 'WALLS'
+        if (Physics.Raycast(transform.position, directionToPlayer, out RaycastHit hit, Mathf.Infinity, layerMask))
         {
-            transform.position = Vector3.MoveTowards(transform.position, toLookAt.position, speed);
+            //CHECKING WHICH OBJECT WAS HIT
+            objectHit = hit.collider.gameObject.name;
+            
+            //Debug.Log($"Recorded Position: {lastRecordedPlayerPosition} | {objectHit}");
         }
         
+        if(objectHit == "Player")
+        {            
+            //STORING PLAYERS POSITION ON RAYCASTHIT
+            lastRecordedPlayerPosition = player.position;
+            
+            //STARTING B-LINING PLAYER
+            goToLastPosition = false;
+            shouldChasePlayer = true;
+        }
+        else
+        {
+            //START B-LINING PLAYERS LAST SEEN POSITION
+            shouldChasePlayer = false;
+            goToLastPosition = true;
+        }
+        
+        //Debug.Log(objectHit);
+        //RESETTING THE COROUTINE FLAG SO IT CAN CONTINUE TO RUN.
+        visionCheckRunning = false;               
     }
 }
