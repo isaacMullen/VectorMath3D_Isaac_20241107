@@ -6,7 +6,10 @@ using UnityEngine.UIElements;
 using Unity.VisualScripting;
 
 public class LookAt : MonoBehaviour
-{
+{        
+    public Animator animator;
+    private Quaternion targetRotation;
+    
     public Transform player;    
     Vector3 directionToPlayer;
     Vector3 lastRecordedPlayerPosition;
@@ -40,6 +43,8 @@ public class LookAt : MonoBehaviour
 
     private void OnDrawGizmos()
     {
+        Gizmos.DrawLine(transform.position, lastRecordedPlayerPosition);
+        
         //Drawing a line to the player we are looking at
         Gizmos.color = Color.blue;
         Gizmos.DrawLine(transform.position, player.position);
@@ -65,7 +70,7 @@ public class LookAt : MonoBehaviour
 
         //Comparing the dot product to the angle of view on each side of the forward direction. Hence dividing the viewangle by 2.
         //If i didn't divide it by 2, the 45 degree angle would be used on each side, resulting in a 90 degree total viewing angle.
-        if (dotProduct > Mathf.Cos((viewAngle * .5f) * Mathf.Deg2Rad))
+        if (dotProduct > Mathf.Cos((viewAngle * .5f) * Mathf.Deg2Rad) && Vector3.Distance(transform.position, player.position) < aggroRange)
         {
             isInViewText.text = $"In View";
             GetComponent<Renderer>().material = aggroMaterial;
@@ -82,11 +87,9 @@ public class LookAt : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        EnemyAggro(); //RETURNING A FLAG TO CALL THE CHASE METHOD IN FIXED UPDATE
-
-        
+        EnemyAggro(); //RETURNING A FLAG TO CALL THE CHASE METHOD IN FIXED UPDATE       
     }
-
+   
     private void FixedUpdate()
     {
         //Debug.Log(shouldChasePlayer);
@@ -101,7 +104,8 @@ public class LookAt : MonoBehaviour
         
     }
     bool EnemyAggro()
-    {
+    {                                        
+        //GETTING DIFFERENCE BETWEEN PLAYER POSITION AND CURRENT POSITION (NORMALIZED)
         directionToPlayer = (player.position - transform.position).normalized;
 
         //Determining the dot product
@@ -112,6 +116,7 @@ public class LookAt : MonoBehaviour
         //IF THE PLAYER IS INSIDE THE VIEWING ANGLE AND IN RANGE
         if (dotProduct > Mathf.Cos((viewAngle * .5f) * Mathf.Deg2Rad) && Vector3.Distance(transform.position, player.position) < aggroRange)
         {
+            
             isInViewText.text = $"In View";            
             GetComponent<Renderer>().material = aggroMaterial;
             return enemyAggrod = true;
@@ -125,31 +130,42 @@ public class LookAt : MonoBehaviour
         }        
     }
 
+    //CHECKS FOR THE SHADER
+    
+
     void ChasePlayer()
     {
         var step = rotationSpeed * Time.deltaTime;
-        
+                
         if (shouldChasePlayer)
         {
-            
-
-            //GETTING OUR TARGET ROATION USING THE PREVIOUSLY CALCULATED 'directionToPlayer' TO USE INSIDE THE 'Quaternion.RotateTowards' METHOD. 
-            Quaternion targetRotation = Quaternion.LookRotation(directionToPlayer);
+            //SETTING THE TARGET ROTATION TO ROTATE TOWARDS USING THE NORMALIZED DIFFERENCE OF PLAYER AND CURRENT POSITION 
+            directionToPlayer = (player.position - transform.position).normalized;
+            targetRotation = Quaternion.LookRotation(directionToPlayer);
             
             //MOVE TOWARDS PLAYER
             transform.position = Vector3.MoveTowards(transform.position, player.position, moveSpeed);
             transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, step);
 
+
         }
         else if(goToLastPosition)
         {
+            //SETTING THE TARGET DIRECTION TO ROTATE TOWARDS BASED ON THE NOMRALIZED DIFFERENE OF LAST RECORDED AND CURRENT POSITION
+            Vector3 directionToLastKnownPosition = (lastRecordedPlayerPosition - transform.position).normalized;
+            targetRotation = Quaternion.LookRotation(directionToLastKnownPosition);
             
             //MOVE TOWARDS PLAYERS LAST POSITION
             transform.position = Vector3.MoveTowards(transform.position, lastRecordedPlayerPosition, moveSpeed);
-            transform.LookAt(transform.position, lastRecordedPlayerPosition);
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, step);
+            Debug.Log("Going To Last Location");
+            
 
             if (transform.position == lastRecordedPlayerPosition)
-            {                
+            {
+                //PLAYING THE ANIMATION WHEN THE ENEMY REACHES PLAYERS LAST KNOW LOCATION
+                animator.enabled = true;
+
                 //STOPPING THE MOVEMENT ONCE THE ENEMY GETS TO THE PLAYERS LAST RECORD POSITION. LATER HE WILL LOOK AROUND FOR THEM.
                 goToLastPosition = false;
                 shouldChasePlayer = false;
@@ -170,11 +186,12 @@ public class LookAt : MonoBehaviour
         //SET THE COROUTINE FLAG TO RUNNING
         visionCheckRunning = true;
         
-        //SETTING A TOGGLE SO THAT THE ENEMY WILL CONTINUE TO RAYCAST ANYTIME IT IS MOVING AS WELL AS ANYTIME IT IS AGGROD BY SEEING THE PLAYER
+        //SETTING A TOGGLE, INSTEAD OF A TYPICAL RETURN VALIE OF TRUE OR FALSE, SO THAT THE ENEMY WILL CONTINUE TO RAYCAST ANYTIME IT IS MOVING
+        //AS WELL AS ANYTIME IT IS AGGROD BY SEEING THE PLAYER ('ENEMYAGGRO' STARTS THIS COROUTINE)
         checkingVision = true;
 
         //COOLDOWN FOR THE RAYCAST
-        yield return new WaitForSeconds(.1f);
+        yield return new WaitForSeconds(.01f);
         
         //SELECTING MASKS TO INTERACT WITH
         LayerMask layerMask = LayerMask.GetMask("Walls", "Player");
@@ -191,7 +208,10 @@ public class LookAt : MonoBehaviour
         }
         
         if(objectHit == "Player")
-        {            
+        {
+            //STOPPING ANIMATION WHEN THE ENEMY CAN SEE THE PLAYER
+            animator.enabled = false;
+
             //STORING PLAYERS POSITION ON RAYCASTHIT
             lastRecordedPlayerPosition = player.position;
             
@@ -208,9 +228,8 @@ public class LookAt : MonoBehaviour
             shouldChasePlayer = false;
             goToLastPosition = true;            
         }
-        
-        //Debug.Log(objectHit);
-        //RESETTING THE COROUTINE FLAG SO IT CAN CONTINUE TO RUN.
+                
+        //RESETTING THE COROUTINE FLAG SO IT CAN BE RUN AGAIN.
         visionCheckRunning = false;               
     }
 }

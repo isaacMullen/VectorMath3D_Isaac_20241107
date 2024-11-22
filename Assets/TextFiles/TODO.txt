@@ -1,9 +1,8 @@
 TO-DO
 
-Visually display the detection zone so the player more easily tell when they will be detected
 Add a player controller
 
-Add an animation that will loop when the enemy hasn't detected anyone. (He will look back and forth)
+
 
 
 
@@ -29,3 +28,5 @@ behind a wall so they can avoid trying to run through walls
 -track the players position on valid raycast hit
 
 -if the player isnt detected by a raycast. Move to the last tracked position instead of moving to the players position
+
+-Add an animation that will loop when the enemy hasn't detected anyone. (He will look back and forth)
