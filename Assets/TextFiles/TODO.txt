@@ -1,11 +1,6 @@
 TO-DO
 
-Add a player controller
-
-stretch (Add Dynamic scouting for Enemy)
-
--Add A parameter to the animation
--Add A check when player leaves enemy's sight to track which side he went
+Add Ability To Toss an object (will later be used to distract enemies)
 
 
 
@@ -24,6 +19,8 @@ stretch (Add Dynamic scouting for Enemy)
 
 
 DONE ------------------------------------------------------------------------------
+
+-Add Player Controller
 
 -The Enemy needs to track the last detected position of the player and store it in case the player "dissapears" 
 behind a wall so they can avoid trying to run through walls
