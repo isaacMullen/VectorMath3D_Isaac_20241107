@@ -2,7 +2,10 @@ TO-DO
 
 Add a player controller
 
+stretch (Add Dynamic scouting for Enemy)
 
+-Add A parameter to the animation
+-Add A check when player leaves enemy's sight to track which side he went
 
 
 
