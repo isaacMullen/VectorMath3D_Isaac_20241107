@@ -1,6 +1,8 @@
 TO-DO
 
-Add Ability To Toss an object (will later be used to distract enemies)
+Add Reflect to the projectile
+
+Make the Enemy chase the projectile as 
 
 
 
@@ -30,3 +32,5 @@ behind a wall so they can avoid trying to run through walls
 -if the player isnt detected by a raycast. Move to the last tracked position instead of moving to the players position
 
 -Add an animation that will loop when the enemy hasn't detected anyone. (He will look back and forth)
+
+-Add Ability To Toss an object (will later be used to distract enemies)

@@ -158,7 +158,7 @@ public class LookAt : MonoBehaviour
             //MOVE TOWARDS PLAYERS LAST POSITION
             transform.position = Vector3.MoveTowards(transform.position, lastRecordedPlayerPosition, moveSpeed);
             transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, step);
-            Debug.Log("Going To Last Location");
+            //Debug.Log("Going To Last Location");
             
 
             if (transform.position == lastRecordedPlayerPosition)
