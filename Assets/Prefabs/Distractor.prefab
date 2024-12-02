@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 8284335973392791038}
   - component: {fileID: -4297110678642677409}
   - component: {fileID: -7068849862463742806}
+  - component: {fileID: -8547337530334583064}
   m_Layer: 0
   m_Name: Distractor
   m_TagString: Untagged
@@ -99,7 +100,7 @@ SphereCollider:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 8
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
@@ -124,6 +125,7 @@ MonoBehaviour:
     m_Bits: 64
   shotSpeed: 25
   shotTime: 5
+  dampingFactor: 0.99
 --- !u!54 &-7068849862463742806
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -151,3 +153,21 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 1
+--- !u!114 &-8547337530334583064
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 197956688799778456}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da1a1d28c8fe1474ba67721222756392, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gravityForce: 9.81
+  sphereRadius: 0.25
+  maxCheckDistance: 0.25
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 128

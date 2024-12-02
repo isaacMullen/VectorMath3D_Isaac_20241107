@@ -1,63 +1,69 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
 public class ProjectileHandler : MonoBehaviour
 {
-    public LayerMask layerMask;
-
-    private Rigidbody rb;
+    public LayerMask layerMask;   
 
     public float shotSpeed;
-    private Vector3 currentDirection;
+    bool shotStopped;
+    private Vector3 velocity;
 
     public float shotTime;
+    public float dampingFactor = 0.95f;
     private float timer;
 
     private void Start()
     {
-        // Initialize Rigidbody and set collision detection mode to avoid missed collisions
-        rb = GetComponent<Rigidbody>();
-        rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
+        
     }
 
     private void OnEnable()
     {
         // Reset timer and initialize direction
         timer = 0f;
-        currentDirection = transform.forward.normalized;
+        velocity = transform.forward * shotSpeed;
     }
 
     // Update is called once per frame     
     private void Update()
     {
+        if(!shotStopped)
+        {
+            MoveProjectile();
+        }
+                               
         // Increment timer and disable object if its lifetime expires
         timer += Time.deltaTime;
         if (timer > shotTime)
         {
             gameObject.SetActive(false);
-        }
-
-        // Move projectile while respecting Unity's physics system
-        rb.MovePosition(transform.position + shotSpeed * Time.deltaTime * currentDirection);
+        }        
     }
 
-    private void OnCollisionEnter(Collision collision)
+    void MoveProjectile()
     {
-        // Log collision events for debugging
-        Debug.Log($"Collision with: {collision.gameObject.name}");
+        Ray ray = new Ray(transform.position, velocity);
+        RaycastHit hit;
 
-        // Reflect direction if collision occurs with an object tagged as "Wall"
-        if (collision.gameObject.CompareTag("Wall"))
+        if(Physics.Raycast(ray, out hit, shotSpeed * Time.deltaTime, layerMask))
         {
-            Debug.Log("Wall Collision Detected");
+            velocity = Vector3.Reflect(velocity, hit.normal);
 
-            // Get the collision's contact point and surface normal
-            ContactPoint contact = collision.contacts[0];
-            Vector3 surfaceNormal = contact.normal;
+            transform.position = hit.point + velocity.normalized * 0.1f;
+        }
+        else
+        {           
+            transform.position += velocity * Time.deltaTime;
 
-            // Reflect the current direction based on the surface normal
-            currentDirection = Vector3.Reflect(currentDirection, surfaceNormal).normalized;
+            velocity *= dampingFactor; 
+            if (velocity.magnitude <= 0.1f)  
+            {
+                shotStopped = true;
+            }
         }
     }
+    
 }

@@ -34,8 +34,9 @@ public class PlayerController : MonoBehaviour
         float movementX = Input.GetAxis("Horizontal");
         float movementY = Input.GetAxis("Vertical");
 
-        Vector3 move = transform.TransformDirection(movementX, 0, movementY);
+        Vector3 move = transform.right * movementX + transform.forward * movementY;
 
+        // Move the player using SimpleMove (this accounts for gravity)
         controller.SimpleMove(move * speed);
 
         float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
