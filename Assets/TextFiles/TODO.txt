@@ -1,6 +1,6 @@
 TO-DO
 
-Add Reflect to the projectile
+
 
 Make the Enemy chase the projectile as 
 
@@ -34,3 +34,5 @@ behind a wall so they can avoid trying to run through walls
 -Add an animation that will loop when the enemy hasn't detected anyone. (He will look back and forth)
 
 -Add Ability To Toss an object (will later be used to distract enemies)
+
+- Add Reflect to the projectile

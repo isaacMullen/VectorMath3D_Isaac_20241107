@@ -1,8 +1,15 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class EnemyAI : MonoBehaviour
 {
+    public Material agrroMat;
+    public Material nonAggroMat;
+    new Renderer renderer;
+
+    public DetectionManager detectionManager;
+
     public Animator animator;
     private Quaternion targetRotation;
 
@@ -22,6 +29,11 @@ public class EnemyAI : MonoBehaviour
     private Vector3 lastKnownPosition;
     private bool isChasingLastPosition;
 
+    private void Start()
+    {
+        renderer = GetComponent<Renderer>();
+    }
+
     void Update()
     {
         DetectTargets();
@@ -40,6 +52,16 @@ public class EnemyAI : MonoBehaviour
         // Check if the player is visible
         if (CanSeeTarget(player))
         {
+            if(renderer != null)
+            {
+                renderer.material = agrroMat;
+            }
+            Debug.Log("CAN SEE PLAYER");
+
+            // Optionally, add a delay or cooldown here before resetting detection value
+            detectionManager.currentDetectionValue += Time.deltaTime * detectionManager.detectionSpeed;
+            detectionManager.currentDetectionValue = Mathf.Clamp(detectionManager.currentDetectionValue, 0, detectionManager.maxDetectionValue);
+
             float distanceToPlayer = Vector3.Distance(transform.position, player.position);
             if (distanceToPlayer < closestDistance)
             {
@@ -47,20 +69,13 @@ public class EnemyAI : MonoBehaviour
                 bestTarget = player;
             }
         }
+        else if(renderer != null)
+        {
+            renderer.material = nonAggroMat;
+        }
 
         // Check if any ball is visible
-        foreach (Transform ball in balls)
-        {
-            if (CanSeeTarget(ball))
-            {
-                float distanceToBall = Vector3.Distance(transform.position, ball.position);
-                if (distanceToBall < closestDistance)
-                {
-                    closestDistance = distanceToBall;
-                    bestTarget = ball;
-                }
-            }
-        }
+        
 
         // Update the current target
         if (bestTarget != null)
@@ -76,6 +91,7 @@ public class EnemyAI : MonoBehaviour
             isChasingLastPosition = true;
         }
     }
+
 
     bool CanSeeTarget(Transform target)
     {
@@ -108,7 +124,8 @@ public class EnemyAI : MonoBehaviour
         Vector3 targetPosition;
 
         if (currentTarget != null)
-        {
+        {            
+
             // Move towards the current target
             targetPosition = currentTarget.position;
         }

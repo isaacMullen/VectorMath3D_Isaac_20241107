@@ -1,9 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.Rendering;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PlayerController : MonoBehaviour
-{
+{        
+
     public float speed;
 
     public float mouseSensitivity;
@@ -25,11 +28,11 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if(Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButtonDown(0))
         {
             Shoot();
         }
-        
+
         //MOVEMENT LOGIC
         float movementX = Input.GetAxis("Horizontal");
         float movementY = Input.GetAxis("Vertical");
@@ -57,6 +60,8 @@ public class PlayerController : MonoBehaviour
         projectile.transform.rotation = launchPoint.rotation;
 
         projectile.SetActive(true);
-    }
+    }    
 
+    
 }
+
